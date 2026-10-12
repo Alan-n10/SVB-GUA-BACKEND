@@ -1,0 +1,27 @@
+{
+  "name": "svb-gua-backend",
+  "version": "1.0.0",
+  "description": "API del Sistema de Venta de Boletos SVB-GUA",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "db:artistas": "node scripts/crear-tabla-artistas.js",
+    "db:usuarios": "node scripts/crear-tabla-usuarios.js",
+    "db:admin": "node scripts/crear-admin.js",
+    "test": "node --test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.23.1",
+    "sequelize": "^6.37.8"
+  }
+}
