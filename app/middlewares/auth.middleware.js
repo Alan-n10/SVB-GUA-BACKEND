@@ -1,33 +1,30 @@
-const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const db = require("../models");
 
-exports.verificarToken = async (req, res, next) => {
-    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-        return res.status(503).send({ message: "Falta configurar JWT_SECRET en el servidor." });
-    }
+// Basic Auth: EchoAPI envia usuario y contrasena en cada peticion protegida.
+exports.verificarCredenciales = async (req, res, next) => {
     const cabecera = req.headers.authorization || "";
-    const partes = cabecera.split(" ");
-    if (partes.length !== 2 || partes[0] !== "Bearer" || !partes[1]) {
-        return res.status(401).send({ message: "Envia el token en Authorization: Bearer TOKEN." });
+    const partes = /^Basic ([A-Za-z0-9+/]+={0,2})$/i.exec(cabecera);
+    if (!partes || partes[1].length > 1024) {
+        return res.status(401).send({ message: "Configura Basic Auth con tu usuario y contrasena." });
     }
-    let datos;
+    const credenciales = Buffer.from(partes[1], "base64").toString("utf8");
+    const separador = credenciales.indexOf(":");
+    const nombre = credenciales.slice(0, separador).trim();
+    const contrasena = credenciales.slice(separador + 1);
+    if (separador < 1 || !nombre || nombre.length > 50 || !contrasena || Buffer.byteLength(contrasena, "utf8") > 72) {
+        return res.status(401).send({ message: "Usuario o contrasena incorrectos." });
+    }
     try {
-        datos = jwt.verify(partes[1], process.env.JWT_SECRET, { algorithms: ["HS256"] });
-        if (!/^[1-9]\d*$/.test(datos.sub) || !Number.isSafeInteger(Number(datos.sub)) || Number(datos.sub) > 2147483647) {
-            return res.status(401).send({ message: "Token invalido." });
+        const usuario = await db.usuarios.scope("conContrasena").findOne({ where: { nombre_usuario: nombre } });
+        if (!usuario || !(await bcrypt.compare(contrasena, usuario.contrasena_hash))) {
+            return res.status(401).send({ message: "Usuario o contrasena incorrectos." });
         }
-    } catch (error) {
-        return res.status(401).send({ message: "Token invalido o expirado." });
-    }
-    try {
-        // Leemos el rol actual de la base, no un rol antiguo guardado en el token.
-        const usuario = await db.usuarios.findByPk(datos.sub);
-        if (!usuario) return res.status(401).send({ message: "El usuario de esta sesion ya no existe." });
         req.usuario = usuario;
         next();
     } catch (error) {
-        console.error("Error al consultar sesion:", error.message);
-        res.status(500).send({ message: "No se pudo verificar la sesion." });
+        console.error("Error al verificar credenciales:", error.message);
+        res.status(500).send({ message: "No se pudo verificar el usuario." });
     }
 };
 

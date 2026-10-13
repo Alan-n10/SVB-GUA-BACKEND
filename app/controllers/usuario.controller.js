@@ -1,7 +1,7 @@
 const db = require("../models");
 const Usuario = db.usuarios;
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+
 
 // Nunca enviamos contrasena_hash al frontend, tampoco al crear o actualizar.
 function datosPublicos(usuario) {
@@ -17,7 +17,7 @@ function validar(body, parcial = false) {
     if (parcial && !Object.keys(body).length) return "Envia al menos un campo para actualizar.";
     for (const [campo, maximo] of [["nombre_usuario", 50], ["nombre_completo", 100]]) {
         if (!parcial || body[campo] !== undefined) {
-            if (typeof body[campo] !== "string" || !body[campo].trim() || body[campo].trim().length > maximo) {
+            if (typeof body[campo] !== "string" || !body[campo].trim() || body[campo].trim().length > maximo || (campo === "nombre_usuario" && body[campo].includes(":"))) {
                 return `${campo} es obligatorio y admite hasta ${maximo} caracteres.`;
             }
         }
@@ -140,18 +140,12 @@ exports.login = async (req, res) => {
     if (typeof nombre_usuario !== "string" || !nombre_usuario.trim() || typeof contrasena !== "string" || !contrasena || Buffer.byteLength(contrasena, "utf8") > 72) {
         return res.status(400).send({ message: "Envia nombre_usuario y contrasena validos." });
     }
-    if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-        return res.status(503).send({ message: "Falta configurar JWT_SECRET en el servidor." });
-    }
     try {
         const usuario = await Usuario.scope("conContrasena").findOne({ where: { nombre_usuario: nombre_usuario.trim() } });
         if (!usuario || !(await bcrypt.compare(contrasena, usuario.contrasena_hash))) {
             return res.status(401).send({ message: "Usuario o contrasena incorrectos." });
         }
-        const token = jwt.sign({}, process.env.JWT_SECRET, {
-            subject: String(usuario.id_usuario), expiresIn: "2h", algorithm: "HS256"
-        });
-        res.send({ token, usuario: datosPublicos(usuario) });
+        res.send({ message: "Login correcto.", usuario: datosPublicos(usuario) });
     } catch (error) {
         responderError(error, res);
     }
@@ -159,3 +153,4 @@ exports.login = async (req, res) => {
 
 // GET - El frontend puede consultar la identidad de la sesion.
 exports.me = (req, res) => res.send(datosPublicos(req.usuario));
+

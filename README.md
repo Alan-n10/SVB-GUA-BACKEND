@@ -39,12 +39,12 @@ Las ventas deben calcular precios y totales en el servidor y registrar venta, de
 
 ## Modulo de usuarios: prueba paso a paso
 
-1. Mantener los datos de Neon en `.env`. `JWT_SECRET` debe ser una clave aleatoria de al menos 32 caracteres; ya se genero una clave local durante la implementacion. Tu companero debe configurar su propia clave en su `.env`.
+1. Mantener los datos de Neon en `.env`. No se necesita ninguna clave JWT.
 2. Ejecutar `npm.cmd run db:usuarios` si todavia no existe la tabla.
 3. Ejecutar `npm.cmd run db:admin`. Pedira nombre de usuario y nombre completo, creara el primer administrador y mostrara una contrasena aleatoria. Guardarla para iniciar sesion. El comando no reemplaza usuarios existentes ni crea otro administrador si ya hay uno.
 4. Reiniciar el servidor con `npm.cmd run dev`.
-5. Importar `postman/SVB-GUA-Usuarios.postman_collection.json` en Postman. En las variables de la coleccion completar `adminUsuario` y `adminContrasena` localmente. No exportar ni subir credenciales reales.
-6. Ejecutar las peticiones en orden. Login guarda `token` y crear vendedor guarda `usuarioId`. La ultima peticion elimina al vendedor de prueba.
+5. En EchoAPI o Postman usar la URL completa `http://localhost:8081/api/usuarios/login`, metodo POST y Body raw JSON.
+6. Para las otras rutas, abrir Auth, seleccionar Basic Auth y escribir el usuario y la contrasena del administrador. No configurar Bearer.
 
 | Metodo | Endpoint | Acceso |
 | --- | --- | --- |
@@ -57,16 +57,22 @@ Las ventas deben calcular precios y totales en el servidor y registrar venta, de
 | PUT | `/api/usuarios/update/:id` | Administrador |
 | DELETE | `/api/usuarios/delete/:id` | Administrador |
 
-### Login desde Postman o Java
+### Login desde EchoAPI, Postman o Java
 
-Enviar JSON con `nombre_usuario` y `contrasena` a `POST /api/usuarios/login`. La respuesta tiene `{ token, usuario }`. Conservar el token en memoria y enviarlo en las siguientes peticiones:
+Enviar JSON con `nombre_usuario` y `contrasena` a `POST /api/usuarios/login`. La respuesta es `{ message: "Login correcto.", usuario }`, con ID, nombre y rol. El login comprueba los datos y no crea una sesion en el servidor.
 
-```text
-Authorization: Bearer TOKEN_RECIBIDO
-Content-Type: application/json
+Para cada peticion protegida, en EchoAPI abrir **Auth > Basic Auth** y completar Username y Password. La herramienta construye la cabecera automaticamente. El usuario y la contrasena se verifican en cada peticion y no se necesitan tokens.
+
+En Java conservar las credenciales solo en memoria mientras se usa la aplicacion. Al cerrar sesion, eliminarlas de la memoria. Construir la cabecera usando UTF-8:
+
+```java
+String credenciales = nombreUsuario + ":" + contrasena;
+String authorization = "Basic " + java.util.Base64.getEncoder()
+    .encodeToString(credenciales.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+// Agregar authorization al header Authorization de cada peticion protegida.
 ```
 
-El token expira en dos horas. Volver a iniciar sesion cuando el servidor devuelva 401. El endpoint `/me` permite consultar el usuario actual. Un vendedor puede iniciar sesion y consultar `/me`, pero no administrar usuarios (403).
+Usar la URL HTTPS de Render al publicar, porque Basic Auth envia las credenciales en cada peticion. Base64 es una codificacion, no cifrado. Un vendedor puede consultar `/me`, pero no administrar usuarios (403). Al cambiar una contrasena, usar la nueva en Basic Auth.
 
 ### Crear un usuario
 
@@ -81,8 +87,9 @@ El token expira en dos horas. Volver a iniciar sesion cuando el servidor devuelv
 
 No enviar `id_usuario`, `fecha_creacion` ni `contrasena_hash`: los administra el servidor. Crear devuelve 201 con los datos publicos del usuario. PUT acepta uno o mas de los mismos cuatro campos; enviar `contrasena` para cambiarla. Los hashes nunca se incluyen en las respuestas.
 
-Codigos principales: 400 datos invalidos, 401 sesion o credenciales invalidas, 403 sin permisos, 404 usuario inexistente, 409 nombre duplicado o eliminacion incompatible. Un administrador no puede eliminarse ni quitarse su propio rol. Cuando existan ventas relacionadas, no se debe eliminar su vendedor.
+Codigos principales: 400 datos invalidos, 401 credenciales invalidas, 403 sin permisos, 404 usuario inexistente, 409 nombre duplicado o eliminacion incompatible. Un administrador no puede eliminarse ni quitarse su propio rol. Cuando existan ventas relacionadas, no se debe eliminar su vendedor.
 
 ### Verificacion automatica
 
-`npm.cmd test` comprueba el flujo HTTP de login y CRUD, permisos, exclusiones del hash, cambio de contrasena, duplicados, validaciones y tokens expirados. Usa persistencia simulada y no se conecta a Neon. La coleccion Postman permite verificar posteriormente la conexion y persistencia reales.
+`npm.cmd test` comprueba el flujo HTTP de login y CRUD, permisos, exclusiones del hash, cambio de contrasena, duplicados, validaciones y Basic Auth. Usa persistencia simulada y no se conecta a Neon. Probar despues en EchoAPI permite verificar la conexion y persistencia reales.
+

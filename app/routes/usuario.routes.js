@@ -4,10 +4,10 @@ module.exports = app => {
     const router = require("express").Router();
 
     router.post("/login", usuarios.login);
-    router.get("/me", auth.verificarToken, usuarios.me);
+    router.get("/me", auth.verificarCredenciales, usuarios.me);
 
     // Conservamos el estilo /create, /update/:id y /delete/:id de tu otra API.
-    router.use(auth.verificarToken, auth.esAdministrador);
+    router.use(auth.verificarCredenciales, auth.esAdministrador);
     router.post("/create", usuarios.create);
     router.get("/", usuarios.findAll);
     router.get("/:id", usuarios.findOne);
@@ -16,3 +16,4 @@ module.exports = app => {
 
     app.use("/api/usuarios", router);
 };
+

@@ -9,8 +9,8 @@ async function crearAdmin() {
     try {
         const nombre = (await terminal.question("Nombre de usuario del administrador: ")).trim();
         const completo = (await terminal.question("Nombre completo: ")).trim();
-        if (!nombre || nombre.length > 50 || !completo || completo.length > 100) {
-            throw new Error("Nombre de usuario: 1-50 caracteres. Nombre completo: 1-100 caracteres.");
+        if (!nombre || nombre.includes(":") || nombre.length > 50 || !completo || completo.length > 100) {
+            throw new Error("Nombre de usuario: 1-50 caracteres sin dos puntos. Nombre completo: 1-100 caracteres.");
         }
         db = require("../app/models");
         await db.sequelize.authenticate();
@@ -41,3 +41,4 @@ async function crearAdmin() {
 }
 
 crearAdmin();
+
