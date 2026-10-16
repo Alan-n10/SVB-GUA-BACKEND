@@ -21,7 +21,10 @@ const db = { Sequelize, sequelize };
 db.artistas = require("./artista.model")(sequelize, Sequelize);
 
 db.usuarios = require("./usuario.model")(sequelize, Sequelize);
+db.conciertos = require("./concierto.model")(sequelize, Sequelize);
+
+// Un artista puede tener varios conciertos.
+db.artistas.hasMany(db.conciertos, { foreignKey: "id_artista", onDelete: "RESTRICT" });
+db.conciertos.belongsTo(db.artistas, { foreignKey: "id_artista" });
 
 module.exports = db;
-
-

@@ -93,3 +93,62 @@ Codigos principales: 400 datos invalidos, 401 credenciales invalidas, 403 sin pe
 
 `npm.cmd test` comprueba el flujo HTTP de login y CRUD, permisos, exclusiones del hash, cambio de contrasena, duplicados, validaciones y Basic Auth. Usa persistencia simulada y no se conecta a Neon. Probar despues en EchoAPI permite verificar la conexion y persistencia reales.
 
+
+## Artistas: probar en EchoAPI
+
+Reiniciar con `npm.cmd run dev`. Si falta la tabla, ejecutar `npm.cmd run db:artistas`.
+En cada peticion seleccionar Auth > Basic Auth y escribir usuario y contrasena.
+Administradores y vendedores consultan; solo administradores crean, actualizan y eliminan.
+
+| Metodo | URL local | Funcion |
+| --- | --- | --- |
+| POST | `http://localhost:8081/api/artistas/create` | Crear |
+| GET | `http://localhost:8081/api/artistas/` | Listar |
+| GET | `http://localhost:8081/api/artistas/?nombre_artistico=Ricardo` | Filtrar por nombre |
+| GET | `http://localhost:8081/api/artistas/1` | Consultar por ID |
+| PUT | `http://localhost:8081/api/artistas/update/1` | Actualizar |
+| DELETE | `http://localhost:8081/api/artistas/delete/1` | Eliminar |
+
+Para POST y PUT usar Body > raw > JSON:
+
+```json
+{
+  "nombre_artistico": "Ricardo Arjona",
+  "genero_musical": "Pop latino",
+  "pais_origen": "Guatemala"
+}
+```
+
+PUT requiere nombre_artistico y genero_musical. pais_origen es opcional y se guarda como null si se omite. Usar en las URLs el id_artista que devuelve POST, no asumir que sera 1.
+POST devuelve 201; consultas, cambios y eliminacion devuelven 200. Datos invalidos: 400; credenciales incorrectas: 401; sin permisos: 403; artista inexistente: 404; artista asociado a conciertos: 409.
+
+## Conciertos: probar en EchoAPI
+
+1. Crear primero al menos un artista y anotar su `id_artista`.
+2. Si la tabla todavia no existe, ejecutar `npm.cmd run db:conciertos`. El comando crea la tabla y su relacion con artistas sin borrar tablas.
+3. Reiniciar el servidor. Usar Auth > Basic Auth con el administrador para POST, PUT y DELETE. Un vendedor autenticado puede hacer GET.
+
+| Metodo | URL local | Funcion |
+| --- | --- | --- |
+| POST | `http://localhost:8081/api/conciertos/create` | Crear |
+| GET | `http://localhost:8081/api/conciertos/` | Listar |
+| GET | `http://localhost:8081/api/conciertos/?estado=programado` | Filtrar por estado |
+| GET | `http://localhost:8081/api/conciertos/?id_artista=1` | Filtrar por artista |
+| GET | `http://localhost:8081/api/conciertos/?titulo_evento=gira` | Filtrar por titulo |
+| GET | `http://localhost:8081/api/conciertos/1` | Consultar por ID |
+| PUT | `http://localhost:8081/api/conciertos/update/1` | Actualizar |
+| DELETE | `http://localhost:8081/api/conciertos/delete/1` | Eliminar |
+
+Para POST y PUT usar Body > raw > JSON. `fecha_concierto` debe incluir fecha, hora y zona horaria:
+
+```json
+{
+  "id_artista": 1,
+  "titulo_evento": "Gira de ejemplo",
+  "fecha_concierto": "2026-12-20T20:00:00-06:00",
+  "recinto": "Ciudad de Guatemala",
+  "estado": "programado"
+}
+```
+
+`estado` puede ser `programado`, `activo` o `finalizado`; si se omite, empieza como `programado`. Un concierto necesita un artista que ya exista. Si ya hay tablas de inventario o ventas relacionadas, PostgreSQL impedira eliminar el concierto.

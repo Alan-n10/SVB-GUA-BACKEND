@@ -9,7 +9,8 @@
     "db:artistas": "node scripts/crear-tabla-artistas.js",
     "db:usuarios": "node scripts/crear-tabla-usuarios.js",
     "db:admin": "node scripts/crear-admin.js",
-    "test": "node --test"
+    "test": "node --test",
+    "db:conciertos": "node scripts/crear-tabla-conciertos.js"
   },
   "keywords": [],
   "author": "",

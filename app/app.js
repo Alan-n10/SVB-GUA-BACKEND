@@ -24,6 +24,8 @@ app.get("/api/salud/bd", async (req, res) => {
 
 // Registramos las rutas antes de la respuesta 404.
 require("./routes/usuario.routes")(app);
+require("./routes/artista.routes")(app);
+require("./routes/concierto.routes")(app);
 app.use((req, res) => {
     res.status(404).json({ message: "Ruta no encontrada." });
 });
@@ -35,4 +37,3 @@ app.use((error, req, res, next) => {
 });
 
 module.exports = app;
-
