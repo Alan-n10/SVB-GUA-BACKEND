@@ -26,6 +26,7 @@ app.get("/api/salud/bd", async (req, res) => {
 require("./routes/usuario.routes")(app);
 require("./routes/artista.routes")(app);
 require("./routes/concierto.routes")(app);
+require("./routes/localidad.routes")(app);
 app.use((req, res) => {
     res.status(404).json({ message: "Ruta no encontrada." });
 });

@@ -12,9 +12,10 @@ async function crearAdmin() {
         if (!nombre || nombre.includes(":") || nombre.length > 50 || !completo || completo.length > 100) {
             throw new Error("Nombre de usuario: 1-50 caracteres sin dos puntos. Nombre completo: 1-100 caracteres.");
         }
-        db = require("../app/models");
+        db = require("./app/models");
         await db.sequelize.authenticate();
-        await db.usuarios.sync();
+        // Asegura que existan las tablas antes de crear el administrador.
+        await db.sequelize.sync();
         // Este comando solo sirve para el primer administrador.
         const contrasena = crypto.randomBytes(18).toString("base64url");
         const hash = await bcrypt.hash(contrasena, 12);
@@ -41,4 +42,3 @@ async function crearAdmin() {
 }
 
 crearAdmin();
-
