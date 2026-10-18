@@ -24,6 +24,8 @@ db.usuarios = require("./usuario.model")(sequelize, Sequelize);
 db.conciertos = require("./concierto.model")(sequelize, Sequelize);
 db.localidades = require("./localidad.model")(sequelize, Sequelize);
 db.inventarioBoletos = require("./inventarioBoleto.model")(sequelize, Sequelize);
+db.ventas = require("./venta.model")(sequelize, Sequelize);
+db.detalleVentas = require("./detalleVenta.model")(sequelize, Sequelize);
 
 // Un artista puede tener varios conciertos.
 db.artistas.hasMany(db.conciertos, { foreignKey: "id_artista", onDelete: "RESTRICT" });
@@ -34,5 +36,13 @@ db.conciertos.hasMany(db.inventarioBoletos, { foreignKey: "id_concierto", onDele
 db.inventarioBoletos.belongsTo(db.conciertos, { foreignKey: "id_concierto" });
 db.localidades.hasMany(db.inventarioBoletos, { foreignKey: "id_localidad", onDelete: "RESTRICT" });
 db.inventarioBoletos.belongsTo(db.localidades, { foreignKey: "id_localidad" });
+
+// Cada venta la registra un usuario vendedor y puede tener varios detalles.
+db.usuarios.hasMany(db.ventas, { foreignKey: "id_vendedor", onDelete: "RESTRICT" });
+db.ventas.belongsTo(db.usuarios, { foreignKey: "id_vendedor" });
+db.ventas.hasMany(db.detalleVentas, { foreignKey: "id_venta", as: "detalles", onDelete: "RESTRICT" });
+db.detalleVentas.belongsTo(db.ventas, { foreignKey: "id_venta" });
+db.inventarioBoletos.hasMany(db.detalleVentas, { foreignKey: "id_inventario", as: "detallesVenta", onDelete: "RESTRICT" });
+db.detalleVentas.belongsTo(db.inventarioBoletos, { foreignKey: "id_inventario", as: "inventario" });
 
 module.exports = db;
