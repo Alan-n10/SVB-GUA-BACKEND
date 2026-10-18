@@ -23,9 +23,16 @@ db.artistas = require("./artista.model")(sequelize, Sequelize);
 db.usuarios = require("./usuario.model")(sequelize, Sequelize);
 db.conciertos = require("./concierto.model")(sequelize, Sequelize);
 db.localidades = require("./localidad.model")(sequelize, Sequelize);
+db.inventarioBoletos = require("./inventarioBoleto.model")(sequelize, Sequelize);
 
 // Un artista puede tener varios conciertos.
 db.artistas.hasMany(db.conciertos, { foreignKey: "id_artista", onDelete: "RESTRICT" });
 db.conciertos.belongsTo(db.artistas, { foreignKey: "id_artista" });
+
+// Cada concierto y localidad tienen sus cantidades y precio de boletos.
+db.conciertos.hasMany(db.inventarioBoletos, { foreignKey: "id_concierto", onDelete: "RESTRICT" });
+db.inventarioBoletos.belongsTo(db.conciertos, { foreignKey: "id_concierto" });
+db.localidades.hasMany(db.inventarioBoletos, { foreignKey: "id_localidad", onDelete: "RESTRICT" });
+db.inventarioBoletos.belongsTo(db.localidades, { foreignKey: "id_localidad" });
 
 module.exports = db;
